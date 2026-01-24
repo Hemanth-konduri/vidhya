@@ -53,17 +53,29 @@ export async function middleware(req: NextRequest) {
   const role = profile.role;
 
   // Role-based protection
-  if (pathname.startsWith("/admin") && role !== "admin") {
-    return NextResponse.redirect(new URL("/unauthorized", req.url));
-  }
+ // ADMIN
+if (
+  pathname.startsWith("/dashboards/admin") &&
+  role !== "admin"
+) {
+  return NextResponse.redirect(new URL("/unauthorized", req.url));
+}
 
-  if (pathname.startsWith("/teacher") && role !== "teacher") {
-    return NextResponse.redirect(new URL("/unauthorized", req.url));
-  }
+// TEACHER
+if (
+  pathname.startsWith("/dashboards/teacher") &&
+  role !== "teacher"
+) {
+  return NextResponse.redirect(new URL("/unauthorized", req.url));
+}
 
-  if (pathname.startsWith("/student") && role !== "student") {
-    return NextResponse.redirect(new URL("/unauthorized", req.url));
-  }
+// STUDENT
+if (
+  pathname.startsWith("/dashboards/student") &&
+  role !== "student"
+) {
+  return NextResponse.redirect(new URL("/unauthorized", req.url));
+}
 
   return res;
 }
