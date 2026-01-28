@@ -1,5 +1,16 @@
 // "use client";
 
+import UserCards from "@/components/dashboards/admin/UserCards";
+
+import StudentEnrollmentChart from "@/components/dashboards/admin/StudentEnrollmentChart";
+import AttendanceBarChart from "@/components/dashboards/admin/AttendanceBarChart";
+import CourseDistributionPie from "@/components/dashboards/admin/CourseDistributionPie";
+import AssignmentStatusDonut from "@/components/dashboards/admin/AssignmentStatusDonut";
+
+import RecentUsersTable from "@/components/dashboards/admin/RecentUsersTable";
+import NotificationsPanel from "@/components/dashboards/admin/NotificationsPanel";
+import FeedbackPanel from "@/components/dashboards/admin/FeedbackPanel";
+
 // import { useState } from "react";
 // import { createTeacher } from "./actions/createTeacher";
 // import LogoutButton from "@/components/logout-button";
@@ -63,105 +74,48 @@
 export default function AdminOverviewPage() {
   return (
     <div className="space-y-8">
+
       {/* HEADER */}
       <div>
-        <h1 className="text-2xl font-semibold">
+        <h1 className="text-3xl font-bold text-slate-900">
           Dashboard Overview
         </h1>
-        <p className="text-slate-500 text-sm">
+        <p className="text-slate-500 text-sm mt-1">
           Academic performance & system insights
         </p>
       </div>
 
-      {/* TOP STATS */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-        <StatCard title="Total Students" value="1,240" />
-        <StatCard title="Total Teachers" value="84" />
-        <StatCard title="Active Courses" value="36" />
-        <StatCard title="Classes" value="18" />
+      {/* KPI CARDS */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+        <UserCards title="Total Students" value="1,560" growth="80" />
+        <UserCards title="Total Teachers" value="120" growth="5" />
+        <UserCards title="Total Courses" value="45" growth="8" />
+        <UserCards title="Total Classes" value="30" growth="2" />
+        <UserCards title="Active Courses" value="38" growth="4" />
       </div>
 
-      {/* CHARTS SECTION */}
+      {/* MAIN CHARTS */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div className="bg-white border rounded-lg p-6">
-          <h3 className="font-medium mb-2">
-            Gender Distribution
-          </h3>
-          <div className="h-64 flex items-center justify-center text-slate-400">
-            Pie / Donut Chart (Boys vs Girls)
-          </div>
-        </div>
-
-        <div className="bg-white border rounded-lg p-6">
-          <h3 className="font-medium mb-2">
-            Daily Student Performance
-          </h3>
-          <div className="h-64 flex items-center justify-center text-slate-400">
-            Line Chart (Marks / Activity)
-          </div>
-        </div>
+        <StudentEnrollmentChart />
+        <AttendanceBarChart />
       </div>
 
-      {/* MORE ANALYTICS */}
+      {/* LOWER CHARTS */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="bg-white border rounded-lg p-6">
-          <h3 className="font-medium mb-2">
-            Course Completion Rate
-          </h3>
-          <div className="h-40 flex items-center justify-center text-slate-400">
-            Bar Chart
-          </div>
-        </div>
-
-        <div className="bg-white border rounded-lg p-6">
-          <h3 className="font-medium mb-2">
-            Teacher Workload
-          </h3>
-          <div className="h-40 flex items-center justify-center text-slate-400">
-            Classes & Assignments
-          </div>
-        </div>
-
-        <div className="bg-white border rounded-lg p-6">
-          <h3 className="font-medium mb-2">
-            Alerts & Insights
-          </h3>
-          <ul className="text-sm text-slate-600 space-y-2">
-            <li>⚠️ 12 students inactive</li>
-            <li>📉 Low performance in Math</li>
-            <li>⏳ 5 assignments pending review</li>
-          </ul>
-        </div>
+        <CourseDistributionPie />
+        <AssignmentStatusDonut />
+        <NotificationsPanel />
       </div>
 
-      {/* RECENT ACTIVITY */}
-      <div className="bg-white border rounded-lg p-6">
-        <h3 className="font-medium mb-4">
-          Recent Activities
-        </h3>
+      {/* TABLE + FEEDBACK */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="lg:col-span-2">
+          <RecentUsersTable />
+        </div>
 
-        <ul className="text-sm text-slate-600 space-y-2">
-          <li>👨‍🎓 John enrolled in Physics</li>
-          <li>📝 Assignment graded by Mr. Rao</li>
-          <li>📚 New course added: AI Basics</li>
-        </ul>
+        <FeedbackPanel />
       </div>
-    </div>
-  );
-}
 
-
-function StatCard({
-  title,
-  value,
-}: {
-  title: string;
-  value: string;
-}) {
-  return (
-    <div className="bg-white border rounded-lg p-5">
-      <p className="text-sm text-slate-500">{title}</p>
-      <p className="text-3xl font-semibold mt-1">{value}</p>
     </div>
   );
 }
