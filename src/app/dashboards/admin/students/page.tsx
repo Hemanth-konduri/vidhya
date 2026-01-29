@@ -1,170 +1,179 @@
 "use client";
 
-import { useState } from "react";
-import { Eye, Ban, Trash2 } from "lucide-react";
+import Image from "next/image";
+import { Eye, Trash2 } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { useState } from "react";
 
 type Student = {
   id: string;
   name: string;
+  email: string;
   rollNo: string;
   class: string;
   section: string;
-  active: boolean;
+  status: "active" | "disabled";
 };
 
-
-
-const dummyStudents: Student[] = [
+const students: Student[] = [
   {
     id: "1",
     name: "Rahul Sharma",
+    email: "rahul@gmail.com",
     rollNo: "CSE101",
     class: "CSE",
     section: "A",
-    active: true,
+    status: "active",
   },
   {
     id: "2",
     name: "Ananya Reddy",
+    email: "ananya@gmail.com",
     rollNo: "CSE102",
     class: "CSE",
     section: "B",
-    active: false,
+    status: "disabled",
   },
   {
     id: "3",
     name: "Mohit Verma",
+    email: "mohit@gmail.com",
     rollNo: "ECE201",
     class: "ECE",
     section: "A",
-    active: true,
+    status: "active",
   },
 ];
 
-export default function AdminStudentsPage() {
-  const [selectedClass, setSelectedClass] = useState("");
-  const [selectedSection, setSelectedSection] = useState("");
+export default function StudentsPage() {
   const router = useRouter();
+  const [search, setSearch] = useState("");
 
-  const filteredStudents = dummyStudents.filter((s) => {
-    if (selectedClass && s.class !== selectedClass) return false;
-    if (selectedSection && s.section !== selectedSection) return false;
-    return true;
-  });
+  const filtered = students.filter((s) =>
+    s.name.toLowerCase().includes(search.toLowerCase())
+  );
 
   return (
-    <div className="space-y-6">
-      {/* HEADER */}
-      <div>
-        <h1 className="text-2xl font-semibold">Students</h1>
-        <p className="text-sm text-slate-500">
-          Manage students by class and section
-        </p>
-      </div>
+    <div className="bg-white rounded-xl p-5 border border-slate-200">
 
-      {/* FILTERS */}
-      <div className="flex gap-4">
-        <select
-          value={selectedClass}
-          onChange={(e) => setSelectedClass(e.target.value)}
-          className="border rounded-md px-3 py-2 text-sm"
-        >
-          <option value="">All Classes</option>
-          <option value="CSE">CSE</option>
-          <option value="ECE">ECE</option>
-        </select>
+      {/* TOP BAR */}
+      <div className="flex items-center justify-between mb-6">
+        <h1 className="text-lg font-semibold">Students</h1>
 
-        <select
-          value={selectedSection}
-          onChange={(e) => setSelectedSection(e.target.value)}
-          className="border rounded-md px-3 py-2 text-sm"
-        >
-          <option value="">All Sections</option>
-          <option value="A">Section A</option>
-          <option value="B">Section B</option>
-        </select>
+        <div className="flex items-center gap-3">
+          <input
+            placeholder="Search student..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="border px-3 py-2 rounded-lg text-sm outline-none"
+          />
+
+          <button
+            onClick={() =>
+              router.push("/dashboards/admin/students/add")
+            }
+            className="bg-green-600 text-white px-4 py-2 rounded-lg text-sm"
+          >
+            + Add Student
+          </button>
+        </div>
       </div>
 
       {/* TABLE */}
-      <div className="bg-white border rounded-lg overflow-hidden">
-        <table className="w-full text-sm">
-          <thead className="bg-slate-50 border-b">
-            <tr>
-              <th className="text-left px-4 py-3">Name</th>
-              <th className="text-left px-4 py-3">Roll No</th>
-              <th className="text-left px-4 py-3">Class</th>
-              <th className="text-left px-4 py-3">Section</th>
-              <th className="text-left px-4 py-3">Status</th>
-              <th className="text-right px-4 py-3">Actions</th>
+      <table className="w-full text-sm">
+
+        {/* HEAD */}
+        <thead>
+          <tr className="text-left text-slate-500 border-b">
+            <th className="py-3">Info</th>
+            <th className="hidden md:table-cell">Roll No</th>
+            <th className="hidden md:table-cell">Class</th>
+            <th className="hidden md:table-cell">Section</th>
+            <th>Status</th>
+            <th className="text-right">Actions</th>
+          </tr>
+        </thead>
+
+        {/* BODY */}
+        <tbody>
+          {filtered.map((s) => (
+            <tr
+              key={s.id}
+              className="border-b hover:bg-slate-50 transition"
+            >
+
+              {/* INFO */}
+              <td className="py-4">
+                <div className="flex items-center gap-3">
+                  <Image
+                    src="/noAvatar.png"
+                    alt=""
+                    width={40}
+                    height={40}
+                    className="rounded-full"
+                  />
+                  <div>
+                    <p className="font-medium">{s.name}</p>
+                    <p className="text-xs text-slate-500">
+                      {s.email}
+                    </p>
+                  </div>
+                </div>
+              </td>
+
+              <td className="hidden md:table-cell">
+                {s.rollNo}
+              </td>
+
+              <td className="hidden md:table-cell">
+                {s.class}
+              </td>
+
+              <td className="hidden md:table-cell">
+                {s.section}
+              </td>
+
+              {/* STATUS */}
+              <td>
+                <span
+                  className={`px-2 py-1 rounded-full text-xs ${
+                    s.status === "active"
+                      ? "bg-green-100 text-green-700"
+                      : "bg-red-100 text-red-600"
+                  }`}
+                >
+                  {s.status}
+                </span>
+              </td>
+
+              {/* ACTIONS */}
+              <td>
+                <div className="flex justify-end gap-2">
+
+                  <button
+                    onClick={() =>
+                      router.push(
+                        `/dashboards/admin/students/${s.id}`
+                      )
+                    }
+                    className="w-8 h-8 flex items-center justify-center rounded-full bg-blue-50"
+                  >
+                    <Eye size={16} />
+                  </button>
+
+                  <button className="w-8 h-8 flex items-center justify-center rounded-full bg-red-50">
+                    <Trash2 size={16} />
+                  </button>
+
+                </div>
+              </td>
+
             </tr>
-          </thead>
+          ))}
+        </tbody>
 
-          <tbody>
-            {filteredStudents.length === 0 ? (
-              <tr>
-                <td
-                  colSpan={6}
-                  className="text-center py-8 text-slate-400"
-                >
-                  No students found
-                </td>
-              </tr>
-            ) : (
-              filteredStudents.map((student) => (
-                <tr
-                  key={student.id}
-                  className="border-t hover:bg-slate-50"
-                >
-                  <td className="px-4 py-3 font-medium">
-                    {student.name}
-                  </td>
-                  <td className="px-4 py-3">{student.rollNo}</td>
-                  <td className="px-4 py-3">{student.class}</td>
-                  <td className="px-4 py-3">{student.section}</td>
-                  <td className="px-4 py-3">
-                    <span
-                      className={`px-2 py-1 rounded text-xs ${
-                        student.active
-                          ? "bg-green-100 text-green-700"
-                          : "bg-red-100 text-red-700"
-                      }`}
-                    >
-                      {student.active ? "Active" : "Disabled"}
-                    </span>
-                  </td>
-                  <td className="px-4 py-3 text-right">
-                    <div className="flex justify-end gap-2">
-                      <button
-                            title="View"
-                            onClick={() =>
-                            router.push(`/dashboards/admin/students/${student.id}` )
-                            }
-                             className="p-2 rounded hover:bg-slate-200">
-                     <Eye className="h-4 w-4" />
-                      </button>
+      </table>
 
-                      <button
-                        title="Disable"
-                        className="p-2 rounded hover:bg-yellow-100"
-                      >
-                        <Ban className="h-4 w-4 text-yellow-600" />
-                      </button>
-
-                      <button
-                        title="Delete"
-                        className="p-2 rounded hover:bg-red-100"
-                      >
-                        <Trash2 className="h-4 w-4 text-red-600" />
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              ))
-            )}
-          </tbody>
-        </table>
-      </div>
     </div>
   );
 }

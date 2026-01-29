@@ -1,185 +1,90 @@
 "use client";
 
-import { useParams, useRouter } from "next/navigation";
-import {
-  ArrowLeft,
-  User,
-  BookOpen,
-  BarChart3,
-  MessageSquare,
-  Ban,
-  Trash2,
-} from "lucide-react";
+import { useParams } from "next/navigation";
+import StudentProfileSidebar from "@/components/dashboards/admin/student/StudentProfileSidebar";
 
-/* ---------- DUMMY DATA ---------- */
-
-const student = {
-  id: "1",
-  name: "Rahul Sharma",
-  rollNo: "CSE101",
-  class: "CSE",
-  section: "A",
-  email: "rahul@college.edu",
-  active: true,
-  joinedOn: "2023-07-15",
-  courses: [
-    { name: "Data Structures", progress: 78 },
-    { name: "Operating Systems", progress: 65 },
-    { name: "DBMS", progress: 82 },
-  ],
-  assignments: [
-    { title: "Stacks Assignment", marks: 18, outOf: 20 },
-    { title: "Process Scheduling", marks: 15, outOf: 20 },
-  ],
-  feedbacks: [
-    "Good course structure for DBMS",
-    "Needs more practical examples in OS",
-  ],
-};
+import AttendanceChart from "@/components/dashboards/admin/student/AttendenceChart";
+import LearningActivityChart from "@/components/dashboards/admin/student/LearningActivityChart";
+import PerformanceDonut from "@/components/dashboards/admin/student/PerformanceDonut";
+import EnrolledCoursesList from "@/components/dashboards/admin/student/EnrolledCoursesList";
+import FeedbackComplaints from "@/components/dashboards/admin/student/FeedbackComplaints";
 
 export default function StudentProfilePage() {
-  const router = useRouter();
   const { studentId } = useParams();
 
+  const student = {
+    id: studentId as string,
+    name: "Rahul Sharma",
+    email: "rahul@gmail.com",
+    phone: "+91 9876543210",
+    address: "Hyderabad, India",
+    status: "Active" as "Active" | "Disabled",
+  };
+
   return (
-    <div className="space-y-8">
-      {/* HEADER */}
-      <div className="flex items-center justify-between">
-        <div>
-          <button
-            onClick={() => router.back()}
-            className="flex items-center gap-2 text-sm text-slate-500 hover:text-slate-700"
-          >
-            <ArrowLeft className="h-4 w-4" />
-            Back to Students
-          </button>
+  <div className="space-y-6">
 
-          <h1 className="text-2xl font-semibold mt-2">
-            Student Profile
-          </h1>
-          <p className="text-sm text-slate-500">
-            ID: {studentId}
-          </p>
-        </div>
+    {/* PAGE HEADER */}
+    <div className="mb-6 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
 
-        {/* ADMIN ACTIONS */}
-        <div className="flex gap-3">
-          <button className="flex items-center gap-2 px-3 py-2 text-sm rounded-md bg-yellow-100 text-yellow-700 hover:bg-yellow-200">
-            <Ban className="h-4 w-4" />
-            Disable
-          </button>
+      <div>
+        <p className="text-sm text-slate-500">
+          Dashboard / Students / {student.name}
+        </p>
 
-          <button className="flex items-center gap-2 px-3 py-2 text-sm rounded-md bg-red-100 text-red-700 hover:bg-red-200">
-            <Trash2 className="h-4 w-4" />
-            Delete
-          </button>
-        </div>
+        <h1 className="text-2xl font-semibold">
+          {student.name}
+        </h1>
+
+        <p className="text-sm text-slate-500">
+          Student ID: {student.id}
+        </p>
       </div>
 
-      {/* BASIC INFO */}
-      <Section title="Student Information" icon={User}>
-        <InfoGrid
-          items={[
-            { label: "Name", value: student.name },
-            { label: "Roll No", value: student.rollNo },
-            { label: "Class", value: student.class },
-            { label: "Section", value: student.section },
-            { label: "Email", value: student.email },
-            { label: "Status", value: student.active ? "Active" : "Disabled" },
-            { label: "Joined On", value: student.joinedOn },
-          ]}
-        />
-      </Section>
+      <div className="flex gap-3">
+        <button className="px-4 py-2 border rounded-lg text-sm hover:bg-slate-50">
+          Edit Student
+        </button>
 
-      {/* COURSE PROGRESS */}
-      <Section title="Course Progress" icon={BookOpen}>
-        <div className="space-y-4">
-          {student.courses.map((course) => (
-            <div key={course.name}>
-              <div className="flex justify-between text-sm mb-1">
-                <span>{course.name}</span>
-                <span>{course.progress}%</span>
-              </div>
-              <div className="h-2 bg-slate-200 rounded">
-                <div
-                  className="h-2 bg-indigo-600 rounded"
-                  style={{ width: `${course.progress}%` }}
-                />
-              </div>
-            </div>
-          ))}
-        </div>
-      </Section>
+        <button className="px-4 py-2 bg-yellow-100 text-yellow-700 rounded-lg text-sm">
+          Disable
+        </button>
 
-      {/* ASSIGNMENTS & MARKS */}
-      <Section title="Assignments & Marks" icon={BarChart3}>
-        <table className="w-full text-sm border rounded-lg overflow-hidden">
-          <thead className="bg-slate-50 border-b">
-            <tr>
-              <th className="text-left px-4 py-2">Assignment</th>
-              <th className="text-left px-4 py-2">Marks</th>
-            </tr>
-          </thead>
-          <tbody>
-            {student.assignments.map((a) => (
-              <tr key={a.title} className="border-t">
-                <td className="px-4 py-2">{a.title}</td>
-                <td className="px-4 py-2">
-                  {a.marks} / {a.outOf}
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </Section>
+        <button className="px-4 py-2 bg-red-100 text-red-700 rounded-lg text-sm">
+          Delete
+        </button>
+      </div>
 
-      {/* FEEDBACK */}
-      <Section title="Student Feedback" icon={MessageSquare}>
-        <ul className="list-disc list-inside text-sm text-slate-600 space-y-2">
-          {student.feedbacks.map((f, i) => (
-            <li key={i}>{f}</li>
-          ))}
-        </ul>
-      </Section>
     </div>
-  );
-}
 
-/* ---------- REUSABLE COMPONENTS ---------- */
+    {/* SIDEBAR - TOP */}
+    <StudentProfileSidebar
+      name={student.name}
+      studentId={student.id}
+      email={student.email}
+      phone={student.phone}
+      address={student.address}
+      status={student.status}
+    />
 
-function Section({
-  title,
-  icon: Icon,
-  children,
-}: {
-  title: string;
-  icon: any;
-  children: React.ReactNode;
-}) {
-  return (
-    <div className="bg-white border rounded-lg p-6">
-      <h2 className="flex items-center gap-2 font-medium mb-4">
-        <Icon className="h-5 w-5 text-indigo-600" />
-        {title}
-      </h2>
-      {children}
+    {/* MAIN CONTENT */}
+    <div className="space-y-6">
+
+      {/* THREE GRAPHS IN ONE ROW */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <AttendanceChart />
+        <LearningActivityChart />
+        <PerformanceDonut />
+      </div>
+
+      {/* FEEDBACK/COMPLAINTS AND COURSES IN ONE ROW */}
+      <div className="grid grid-cols-1 lg:grid-cols-[1fr_2fr] gap-6">
+        <FeedbackComplaints />
+        <EnrolledCoursesList />
+      </div>
+
     </div>
-  );
-}
 
-function InfoGrid({
-  items,
-}: {
-  items: { label: string; value: string }[];
-}) {
-  return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 text-sm">
-      {items.map((item) => (
-        <div key={item.label}>
-          <p className="text-slate-500">{item.label}</p>
-          <p className="font-medium">{item.value}</p>
-        </div>
-      ))}
-    </div>
-  );
+  </div>
+);
 }
