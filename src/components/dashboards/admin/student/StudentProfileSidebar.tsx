@@ -29,7 +29,7 @@ export default function StudentProfileSidebar({
     <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
 
       {/* COVER */}
-      <div className="h-16 bg-gradient-to-r from-green-500 to-emerald-400" />
+      <div className="h-16 bg-linear-to-r from-green-500 to-emerald-400" />
 
       {/* PROFILE */}
       <div className="-mt-8 px-4 pb-3 text-center">

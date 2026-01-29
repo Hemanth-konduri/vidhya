@@ -4,6 +4,7 @@ import Image from "next/image";
 import { Eye, Trash2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import Pagination from "@/components/ui/pagination";
 
 type Student = {
   id: string;
@@ -43,15 +44,66 @@ const students: Student[] = [
     section: "A",
     status: "active",
   },
+  {
+    id: "4",
+    name: "Priya Singh",
+    email: "priya@gmail.com",
+    rollNo: "CSE103",
+    class: "CSE",
+    section: "A",
+    status: "active",
+  },
+  {
+    id: "5",
+    name: "Arjun Patel",
+    email: "arjun@gmail.com",
+    rollNo: "ECE202",
+    class: "ECE",
+    section: "B",
+    status: "active",
+  },
+  {
+    id: "6",
+    name: "Sneha Gupta",
+    email: "sneha@gmail.com",
+    rollNo: "CSE104",
+    class: "CSE",
+    section: "B",
+    status: "disabled",
+  },
+  {
+    id: "7",
+    name: "Vikram Kumar",
+    email: "vikram@gmail.com",
+    rollNo: "MECH101",
+    class: "MECH",
+    section: "A",
+    status: "active",
+  },
+  {
+    id: "8",
+    name: "Kavya Reddy",
+    email: "kavya@gmail.com",
+    rollNo: "ECE203",
+    class: "ECE",
+    section: "A",
+    status: "active",
+  },
 ];
 
 export default function StudentsPage() {
   const router = useRouter();
   const [search, setSearch] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 5;
 
   const filtered = students.filter((s) =>
     s.name.toLowerCase().includes(search.toLowerCase())
   );
+
+  const totalPages = Math.ceil(filtered.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const paginatedStudents = filtered.slice(startIndex, startIndex + itemsPerPage);
 
   return (
     <div className="bg-white rounded-xl p-5 border border-slate-200">
@@ -64,7 +116,10 @@ export default function StudentsPage() {
           <input
             placeholder="Search student..."
             value={search}
-            onChange={(e) => setSearch(e.target.value)}
+            onChange={(e) => {
+              setSearch(e.target.value);
+              setCurrentPage(1);
+            }}
             className="border px-3 py-2 rounded-lg text-sm outline-none"
           />
 
@@ -96,7 +151,7 @@ export default function StudentsPage() {
 
         {/* BODY */}
         <tbody>
-          {filtered.map((s) => (
+          {paginatedStudents.map((s) => (
             <tr
               key={s.id}
               className="border-b hover:bg-slate-50 transition"
@@ -173,6 +228,15 @@ export default function StudentsPage() {
         </tbody>
 
       </table>
+
+      {/* PAGINATION */}
+      <Pagination
+        currentPage={currentPage}
+        totalPages={totalPages}
+        onPageChange={setCurrentPage}
+        itemsPerPage={itemsPerPage}
+        totalItems={filtered.length}
+      />
 
     </div>
   );
