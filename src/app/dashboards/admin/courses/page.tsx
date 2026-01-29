@@ -2,6 +2,8 @@
 
 import { BookOpen, Users, Clock, BarChart3, Eye, Lock, Trash2 } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { useState } from "react";
+import Pagination from "@/components/ui/pagination";
 
 type Course = {
   id: string;
@@ -55,10 +57,70 @@ const courses: Course[] = [
     progress: 40,
     status: "Draft",
   },
+  {
+    id: "5",
+    title: "Software Engineering",
+    category: "Computer Science",
+    instructor: "Dr. Amit Singh",
+    students: 110,
+    duration: "50h",
+    progress: 85,
+    status: "Active",
+  },
+  {
+    id: "6",
+    title: "Machine Learning",
+    category: "Computer Science",
+    instructor: "Prof. Neha Patel",
+    students: 75,
+    duration: "60h",
+    progress: 45,
+    status: "Active",
+  },
+  {
+    id: "7",
+    title: "Web Development",
+    category: "Computer Science",
+    instructor: "Vikram Singh",
+    students: 130,
+    duration: "35h",
+    progress: 90,
+    status: "Active",
+  },
+  {
+    id: "8",
+    title: "Digital Marketing",
+    category: "Business",
+    instructor: "Sunita Rao",
+    students: 65,
+    duration: "25h",
+    progress: 100,
+    status: "Completed",
+  },
 ];
 
 export default function CoursesPage() {
   const router = useRouter();
+  const [currentPage, setCurrentPage] = useState(1);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [categoryFilter, setCategoryFilter] = useState("");
+  const [statusFilter, setStatusFilter] = useState("");
+  const itemsPerPage = 5;
+
+  const filteredCourses = courses.filter((course) => {
+    const matchesSearch = course.title.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesCategory = !categoryFilter || course.category === categoryFilter;
+    const matchesStatus = !statusFilter || course.status === statusFilter;
+    return matchesSearch && matchesCategory && matchesStatus;
+  });
+
+  const totalPages = Math.ceil(filteredCourses.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const paginatedCourses = filteredCourses.slice(startIndex, startIndex + itemsPerPage);
+
+  const handleFilterChange = () => {
+    setCurrentPage(1);
+  };
 
   return (
     <div className="space-y-6">
@@ -72,7 +134,10 @@ export default function CoursesPage() {
           </p>
         </div>
 
-        <button className="bg-green-600 text-white px-4 py-2 rounded-lg text-sm">
+        <button 
+          onClick={() => router.push("/dashboards/admin/courses/add")}
+          className="bg-green-600 text-white px-4 py-2 rounded-lg text-sm"
+        >
           + Add Course
         </button>
       </div>
@@ -110,21 +175,40 @@ export default function CoursesPage() {
       <div className="flex flex-wrap gap-3">
         <input
           placeholder="Search courses..."
+          value={searchTerm}
+          onChange={(e) => {
+            setSearchTerm(e.target.value);
+            handleFilterChange();
+          }}
           className="border rounded-lg px-3 py-2 text-sm w-60"
         />
 
-        <select className="border rounded-lg px-3 py-2 text-sm">
-          <option>All Categories</option>
-          <option>Computer Science</option>
-          <option>Business</option>
-          <option>Marketing</option>
+        <select 
+          value={categoryFilter}
+          onChange={(e) => {
+            setCategoryFilter(e.target.value);
+            handleFilterChange();
+          }}
+          className="border rounded-lg px-3 py-2 text-sm"
+        >
+          <option value="">All Categories</option>
+          <option value="Computer Science">Computer Science</option>
+          <option value="Business">Business</option>
+          <option value="Marketing">Marketing</option>
         </select>
 
-        <select className="border rounded-lg px-3 py-2 text-sm">
-          <option>All Status</option>
-          <option>Active</option>
-          <option>Completed</option>
-          <option>Draft</option>
+        <select 
+          value={statusFilter}
+          onChange={(e) => {
+            setStatusFilter(e.target.value);
+            handleFilterChange();
+          }}
+          className="border rounded-lg px-3 py-2 text-sm"
+        >
+          <option value="">All Status</option>
+          <option value="Active">Active</option>
+          <option value="Completed">Completed</option>
+          <option value="Draft">Draft</option>
         </select>
       </div>
 
@@ -143,7 +227,7 @@ export default function CoursesPage() {
         </div>
 
         {/* ROWS */}
-        {courses.map((course) => (
+        {paginatedCourses.map((course) => (
           <div
             key={course.id}
             className="grid grid-cols-[2fr_1fr_1fr_0.8fr_1fr_1fr_1fr] px-6 py-4 text-sm items-center border-t hover:bg-slate-50 gap-4"
@@ -220,6 +304,17 @@ export default function CoursesPage() {
 
           </div>
         ))}
+
+        {/* PAGINATION */}
+        {filteredCourses.length > 0 && (
+          <Pagination
+            currentPage={currentPage}
+            totalPages={totalPages}
+            onPageChange={setCurrentPage}
+            itemsPerPage={itemsPerPage}
+            totalItems={filteredCourses.length}
+          />
+        )}
 
       </div>
 

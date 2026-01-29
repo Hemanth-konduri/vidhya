@@ -60,7 +60,7 @@ export default function AdminSidebar() {
   const router = useRouter();
 
   return (
-    <aside className="w-64 h-screen bg-gradient-to-b from-[#eef5ea] to-[#e5efe1] border-r border-green-200 px-4 py-6 flex flex-col">
+    <aside className="w-64 h-screen bg-linear-to-b from-[#eef5ea] to-[#e5efe1] border-r border-green-200 px-4 py-6 flex flex-col">
 
       {/* Logo */}
       <div className="flex items-center gap-2 mb-10 px-2">
