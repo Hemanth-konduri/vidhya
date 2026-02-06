@@ -1,242 +1,236 @@
 "use client";
 
-import Image from "next/image";
+import { useEffect, useState } from "react";
 import { Eye, Trash2 } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
 import Pagination from "@/components/ui/pagination";
+import { supabase } from "@/lib/supabase/client";
 
 type Student = {
   id: string;
   name: string;
   email: string;
-  rollNo: string;
-  class: string;
-  section: string;
-  status: "active" | "disabled";
+  roll_no: string;
+  image_url: string | null;
+  departments?: { name: string };
+  batches?: { name: string };
 };
 
-const students: Student[] = [
-  {
-    id: "1",
-    name: "Rahul Sharma",
-    email: "rahul@gmail.com",
-    rollNo: "CSE101",
-    class: "CSE",
-    section: "A",
-    status: "active",
-  },
-  {
-    id: "2",
-    name: "Ananya Reddy",
-    email: "ananya@gmail.com",
-    rollNo: "CSE102",
-    class: "CSE",
-    section: "B",
-    status: "disabled",
-  },
-  {
-    id: "3",
-    name: "Mohit Verma",
-    email: "mohit@gmail.com",
-    rollNo: "ECE201",
-    class: "ECE",
-    section: "A",
-    status: "active",
-  },
-  {
-    id: "4",
-    name: "Priya Singh",
-    email: "priya@gmail.com",
-    rollNo: "CSE103",
-    class: "CSE",
-    section: "A",
-    status: "active",
-  },
-  {
-    id: "5",
-    name: "Arjun Patel",
-    email: "arjun@gmail.com",
-    rollNo: "ECE202",
-    class: "ECE",
-    section: "B",
-    status: "active",
-  },
-  {
-    id: "6",
-    name: "Sneha Gupta",
-    email: "sneha@gmail.com",
-    rollNo: "CSE104",
-    class: "CSE",
-    section: "B",
-    status: "disabled",
-  },
-  {
-    id: "7",
-    name: "Vikram Kumar",
-    email: "vikram@gmail.com",
-    rollNo: "MECH101",
-    class: "MECH",
-    section: "A",
-    status: "active",
-  },
-  {
-    id: "8",
-    name: "Kavya Reddy",
-    email: "kavya@gmail.com",
-    rollNo: "ECE203",
-    class: "ECE",
-    section: "A",
-    status: "active",
-  },
-];
 
 export default function StudentsPage() {
   const router = useRouter();
+
+  const [students, setStudents] = useState<Student[]>([]);
   const [search, setSearch] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
+  const [loading, setLoading] = useState(true);
+
   const itemsPerPage = 5;
 
+  useEffect(() => {
+    fetchStudents();
+  }, []);
+
+  async function fetchStudents() {
+    try {
+      const { data, error } = await supabase
+        .from("students")
+        .select(`
+           id,
+           name,
+           email,
+           roll_no,
+           image_url,
+           departments(name),
+           batches(name)
+            `)
+
+        .order("name");
+
+      if (error) throw error;
+      setStudents(data || []);
+    } catch (err) {
+      console.error("Fetch students error:", err);
+    } finally {
+      setLoading(false);
+    }
+  }
+
   const filtered = students.filter((s) =>
-    s.name.toLowerCase().includes(search.toLowerCase())
+    s.name.toLowerCase().includes(search.toLowerCase()) ||
+    s.email.toLowerCase().includes(search.toLowerCase()) ||
+    s.roll_no.toLowerCase().includes(search.toLowerCase()) ||
+    (s.departments?.name || "")
+      .toLowerCase()
+      .includes(search.toLowerCase()) ||
+    (s.batches?.name || "")
+      .toLowerCase()
+      .includes(search.toLowerCase())
   );
 
   const totalPages = Math.ceil(filtered.length / itemsPerPage);
   const startIndex = (currentPage - 1) * itemsPerPage;
-  const paginatedStudents = filtered.slice(startIndex, startIndex + itemsPerPage);
+  const paginatedStudents = filtered.slice(
+    startIndex,
+    startIndex + itemsPerPage
+  );
+
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center h-60 text-slate-500">
+        Loading students...
+      </div>
+    );
+  }
 
   return (
-    <div className="bg-white rounded-xl p-5 border border-slate-200">
+    <div className="space-y-6">
 
-      {/* TOP BAR */}
-      <div className="flex items-center justify-between mb-6">
-        <h1 className="text-lg font-semibold">Students</h1>
-
-        <div className="flex items-center gap-3">
-          <input
-            placeholder="Search student..."
-            value={search}
-            onChange={(e) => {
-              setSearch(e.target.value);
-              setCurrentPage(1);
-            }}
-            className="border px-3 py-2 rounded-lg text-sm outline-none"
-          />
-
-          <button
-            onClick={() =>
-              router.push("/dashboards/admin/students/add")
-            }
-            className="bg-green-600 text-white px-4 py-2 rounded-lg text-sm"
-          >
-            + Add Student
-          </button>
+      {/* HEADER */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-semibold">Students</h1>
+          <p className="text-sm text-slate-500">
+            Manage students ({students.length})
+          </p>
         </div>
+
+        <input
+          placeholder="Search students..."
+          value={search}
+          onChange={(e) => {
+            setSearch(e.target.value);
+            setCurrentPage(1);
+          }}
+          className="border px-3 py-2 rounded-lg text-sm outline-none w-72"
+        />
       </div>
 
       {/* TABLE */}
-      <table className="w-full text-sm">
+      <div className="bg-white border rounded-xl overflow-hidden">
 
-        {/* HEAD */}
-        <thead>
-          <tr className="text-left text-slate-500 border-b">
-            <th className="py-3">Info</th>
-            <th className="hidden md:table-cell">Roll No</th>
-            <th className="hidden md:table-cell">Class</th>
-            <th className="hidden md:table-cell">Section</th>
-            <th>Status</th>
-            <th className="text-right">Actions</th>
-          </tr>
-        </thead>
+        <table className="w-full text-sm border-collapse">
 
-        {/* BODY */}
-        <tbody>
-          {paginatedStudents.map((s) => (
-            <tr
-              key={s.id}
-              className="border-b hover:bg-slate-50 transition"
-            >
-
-              {/* INFO */}
-              <td className="py-4">
-                <div className="flex items-center gap-3">
-                  <Image
-                    src="/noAvatar.png"
-                    alt=""
-                    width={40}
-                    height={40}
-                    className="rounded-full"
-                  />
-                  <div>
-                    <p className="font-medium">{s.name}</p>
-                    <p className="text-xs text-slate-500">
-                      {s.email}
-                    </p>
-                  </div>
-                </div>
-              </td>
-
-              <td className="hidden md:table-cell">
-                {s.rollNo}
-              </td>
-
-              <td className="hidden md:table-cell">
-                {s.class}
-              </td>
-
-              <td className="hidden md:table-cell">
-                {s.section}
-              </td>
-
-              {/* STATUS */}
-              <td>
-                <span
-                  className={`px-2 py-1 rounded-full text-xs ${
-                    s.status === "active"
-                      ? "bg-green-100 text-green-700"
-                      : "bg-red-100 text-red-600"
-                  }`}
-                >
-                  {s.status}
-                </span>
-              </td>
-
-              {/* ACTIONS */}
-              <td>
-                <div className="flex justify-end gap-2">
-
-                  <button
-                    onClick={() =>
-                      router.push(
-                        `/dashboards/admin/students/${s.id}`
-                      )
-                    }
-                    className="w-8 h-8 flex items-center justify-center rounded-full bg-blue-50"
-                  >
-                    <Eye size={16} />
-                  </button>
-
-                  <button className="w-8 h-8 flex items-center justify-center rounded-full bg-red-50">
-                    <Trash2 size={16} />
-                  </button>
-
-                </div>
-              </td>
-
+          <thead className="bg-slate-50 border-b">
+            <tr>
+              <th className="px-4 py-3 text-left">Student</th>
+              <th className="px-4 py-3 text-left">Roll No</th>
+              <th className="px-4 py-3 text-left">Department</th>
+              <th className="px-4 py-3 text-left">Batch</th>
+              <th className="px-4 py-3 text-right">Actions</th>
             </tr>
-          ))}
-        </tbody>
+          </thead>
 
-      </table>
+          <tbody>
 
-      {/* PAGINATION */}
-      <Pagination
-        currentPage={currentPage}
-        totalPages={totalPages}
-        onPageChange={setCurrentPage}
-        itemsPerPage={itemsPerPage}
-        totalItems={filtered.length}
+            {paginatedStudents.length === 0 && (
+              <tr>
+                <td
+                  colSpan={5}
+                  className="text-center py-10 text-slate-400"
+                >
+                  No students found
+                </td>
+              </tr>
+            )}
+
+            {paginatedStudents.map((s) => (
+              <tr
+                key={s.id}
+                className="border-t hover:bg-slate-50"
+              >
+
+                {/* STUDENT */}
+                <td className="px-4 py-3">
+  <div className="flex items-center gap-3">
+
+    {/* PHOTO */}
+    {s.image_url ? (
+      <img
+        src={s.image_url}
+        alt={s.name}
+        className="w-9 h-9 rounded-full object-cover"
       />
+    ) : (
+      <div
+        className="w-9 h-9 rounded-full bg-indigo-100
+                   flex items-center justify-center
+                   text-indigo-700 font-semibold"
+      >
+        {s.name.charAt(0)}
+      </div>
+    )}
+
+    {/* NAME + EMAIL */}
+    <div>
+      <p className="font-medium leading-tight">{s.name}</p>
+      <p className="text-xs text-slate-500">{s.email}</p>
+    </div>
+
+  </div>
+</td>
+
+
+                {/* ROLL */}
+                <td className="px-4 py-3">
+                  {s.roll_no}
+                </td>
+
+                {/* DEPARTMENT */}
+                <td className="px-4 py-3">
+                  {s.departments?.name || "—"}
+                </td>
+
+                {/* BATCH */}
+                <td className="px-4 py-3">
+                  {s.batches?.name || "Unassigned"}
+                </td>
+
+                {/* ACTIONS */}
+                <td className="px-4 py-3 text-right">
+                  <div className="flex justify-end gap-2">
+
+                    <button
+                      onClick={() =>
+                        router.push(
+                          `/dashboards/admin/students/${s.id}`
+                        )
+                      }
+                      className="p-2 rounded hover:bg-slate-200"
+                      title="View"
+                    >
+                      <Eye className="w-4 h-4" />
+                    </button>
+
+                    <button
+                      className="p-2 rounded hover:bg-red-100"
+                      title="Delete"
+                    >
+                      <Trash2 className="w-4 h-4 text-red-600" />
+                    </button>
+
+                  </div>
+                </td>
+
+              </tr>
+            ))}
+
+          </tbody>
+
+        </table>
+
+        {/* PAGINATION */}
+        {filtered.length > 0 && (
+          <Pagination
+            currentPage={currentPage}
+            totalPages={totalPages}
+            onPageChange={setCurrentPage}
+            itemsPerPage={itemsPerPage}
+            totalItems={filtered.length}
+          />
+        )}
+
+      </div>
 
     </div>
   );

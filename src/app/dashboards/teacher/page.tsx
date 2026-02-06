@@ -1,60 +1,54 @@
 "use client";
 
-import { useState } from "react";
-import { createStudent } from "./actions/createStudent";
-import LogoutButton from "@/components/logout-button";
+import TeacherStatCards from "@/components/dashboards/teacher/TeacherStatCards";
 
-export default function TeacherPage() {
-  const [message, setMessage] = useState<string | null>(null);
+import BatchAttendanceLineChart from "@/components/dashboards/teacher/BatchAttendanceLineChart";
+import AssignmentQuizBarChart from "@/components/dashboards/teacher/AssignmentQuizBarChart";
+import CourseCompletionPie from "@/components/dashboards/teacher/CourseCompletionPie";
+import TeachingActivityChart from "@/components/dashboards/teacher/TeachingActivityChart";
 
-  async function handleCreateStudent(formData: FormData) {
-    setMessage(null);
-    try {
-      await createStudent(formData);
-      setMessage("✅ Student created successfully");
-    } catch (err: any) {
-      setMessage(`❌ ${err.message}`);
-    }
-  }
+import RecentSubmissionsPanel from "@/components/dashboards/teacher/RecentSubmissionsPanel";
+import RecentActivitiesPanel from "@/components/dashboards/teacher/RecentActivitiesPanel";
+import ComplaintsPanel from "@/components/dashboards/teacher/ComplaintsPanel";
+import UpcomingSchedulePanel from "@/components/dashboards/teacher/UpcomingSchedulePanel";
 
+export default function TeacherOverviewPage() {
   return (
-    <div style={{ padding: "2rem" }}>
-      <h1>Teacher Dashboard</h1>
+    <div className="space-y-8">
 
-      <LogoutButton />
+      {/* HEADER */}
+      <div>
+        <h1 className="text-3xl font-bold text-slate-900">
+          Teacher Dashboard
+        </h1>
+        <p className="text-slate-500 text-sm mt-1">
+          Teaching insights & class performance
+        </p>
+      </div>
 
-      <hr />
+      {/* KPI CARDS */}
+      <TeacherStatCards />
 
-      <h2>Create Student</h2>
+      {/* MAIN CHARTS */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <BatchAttendanceLineChart />
+        <CourseCompletionPie />
+      </div>
 
-      <form action={handleCreateStudent}>
-        <input
-          name="email"
-          type="email"
-          placeholder="Student Email"
-          required
-        />
-        <br /><br />
+      {/* LOWER CHARTS */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <AssignmentQuizBarChart />
+        <TeachingActivityChart />
+      </div>
 
-        <input
-          name="password"
-          type="password"
-          placeholder="Temporary Password"
-          required
-        />
-        <br /><br />
+      {/* PANELS */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <RecentSubmissionsPanel />
+        <RecentActivitiesPanel />
+        <ComplaintsPanel />
+        <UpcomingSchedulePanel />
+      </div>
 
-        <input
-          name="roll_no"
-          placeholder="Roll Number (unique)"
-          required
-        />
-        <br /><br />
-
-        <button type="submit">Create Student</button>
-      </form>
-
-      {message && <p style={{ marginTop: "1rem" }}>{message}</p>}
     </div>
   );
 }
