@@ -1,8 +1,8 @@
 "use client";
 
 import { Search } from "lucide-react";
-import NotificationDropdown from "./NotificationDropdown";
-import ProfileDropdown from "./ProfileDropdown";
+import NotificationDropdown from "../../common/NotificationDropdown";
+import ProfileDropdown from "../../common/ProfileDropdown";
 
 export default function AdminNavbar() {
   return (

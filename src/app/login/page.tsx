@@ -55,16 +55,12 @@ export default function LoginPage() {
     }
 
     if (profile.role === "admin") {
-  router.push("/dashboards/admin");
-}
-
-if (profile.role === "teacher") {
-  router.push("/dashboards/teacher");
-}
-
-if (profile.role === "student") {
-  router.push("/dashboards/student");
-}
+      router.push("/dashboards/admin");
+    } else if (profile.role === "teacher") {
+      router.push("/dashboards/teacher");
+    } else if (profile.role === "student") {
+      router.push("/dashboards/student");
+    }
 
     setLoading(false);
   }
@@ -129,6 +125,16 @@ if (profile.role === "student") {
             >
               {loading ? "Signing in..." : "Sign In"}
             </Button>
+
+            <div className="text-center">
+              <button
+                type="button"
+                onClick={() => router.push("/forgot-password")}
+                className="text-sm text-indigo-600 hover:text-indigo-500"
+              >
+                Forgot your password?
+              </button>
+            </div>
           </form>
         </div>
       </div>

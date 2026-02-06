@@ -5,33 +5,105 @@ import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase/client";
 import { User, Settings, LogOut, Mail, Bell } from "lucide-react";
 
+type UserInfo = {
+  name: string;
+  email: string;
+  role: string;
+};
+
 export default function ProfileDropdown() {
   const [isOpen, setIsOpen] = useState(false);
+  const [userInfo, setUserInfo] = useState<UserInfo | null>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
 
+  /* ---------------- CLICK OUTSIDE ---------------- */
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+      if (
+        dropdownRef.current &&
+        !dropdownRef.current.contains(event.target as Node)
+      ) {
         setIsOpen(false);
       }
     }
-
     document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
+    return () =>
+      document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
+  /* ---------------- LOAD USER ---------------- */
+  useEffect(() => {
+    loadUser();
+  }, []);
+
+  async function loadUser() {
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    if (!user) return;
+
+    // 1. Get role
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("role")
+      .eq("id", user.id)
+      .single();
+
+    let name = "User";
+
+    // 2. Get name from role table
+    if (profile?.role === "admin") {
+      name = "Administrator";
+    }
+
+    if (profile?.role === "teacher") {
+      const { data } = await supabase
+        .from("teachers")
+        .select("name")
+        .eq("id", user.id)
+        .single();
+      name = data?.name || "Teacher";
+    }
+
+    if (profile?.role === "student") {
+      const { data } = await supabase
+        .from("students")
+        .select("name")
+        .eq("id", user.id)
+        .single();
+      name = data?.name || "Student";
+    }
+
+    setUserInfo({
+      name,
+      email: user.email || "",
+      role: profile?.role || "",
+    });
+  }
+
+  /* ---------------- LOGOUT ---------------- */
   async function logout() {
     await supabase.auth.signOut();
     router.push("/login");
   }
 
+  const initials =
+    userInfo?.name
+      ?.split(" ")
+      .map((n) => n[0])
+      .join("")
+      .slice(0, 2)
+      .toUpperCase() || "U";
+
+  /* ---------------- MENU ---------------- */
   const profileItems = [
     {
       icon: User,
       label: "My Profile",
       action: () => {
-        router.push("/dashboards/admin/profile");
+        router.push(`/dashboards/${userInfo?.role}/profile`);
         setIsOpen(false);
       },
     },
@@ -39,15 +111,15 @@ export default function ProfileDropdown() {
       icon: Mail,
       label: "Messages",
       action: () => {
-        router.push("/dashboards/admin/messages");
+        router.push(`/dashboards/${userInfo?.role}/messages`);
         setIsOpen(false);
       },
     },
     {
       icon: Bell,
-      label: "Send Notifications",
+      label: "Notifications",
       action: () => {
-        router.push("/dashboards/admin/notifications");
+        router.push(`/dashboards/${userInfo?.role}/notifications`);
         setIsOpen(false);
       },
     },
@@ -55,11 +127,13 @@ export default function ProfileDropdown() {
       icon: Settings,
       label: "Settings",
       action: () => {
-        router.push("/dashboards/admin/settings");
+        router.push(`/dashboards/${userInfo?.role}/settings`);
         setIsOpen(false);
       },
     },
   ];
+
+  if (!userInfo) return null;
 
   return (
     <div className="relative" ref={dropdownRef}>
@@ -69,15 +143,20 @@ export default function ProfileDropdown() {
         className="flex items-center gap-2 hover:bg-slate-100 rounded-lg px-2 py-1 transition"
       >
         <div className="text-right leading-tight">
-          <p className="text-sm font-semibold text-slate-700">John Doe</p>
-          <p className="text-xs text-slate-500">Admin</p>
+          <p className="text-sm font-semibold text-slate-700">
+            {userInfo.name}
+          </p>
+          <p className="text-xs text-slate-500 capitalize">
+            {userInfo.role}
+          </p>
         </div>
+
         <div className="w-9 h-9 rounded-full bg-blue-600 text-white flex items-center justify-center font-semibold">
-          JD
+          {initials}
         </div>
       </button>
 
-      {/* DROPDOWN MENU */}
+      {/* DROPDOWN */}
       {isOpen && (
         <div className="absolute right-0 mt-2 w-56 bg-white rounded-xl shadow-lg border border-slate-200 z-50">
 
@@ -85,17 +164,23 @@ export default function ProfileDropdown() {
           <div className="p-4 border-b border-slate-200">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-full bg-blue-600 text-white flex items-center justify-center font-semibold text-lg">
-                JD
+                {initials}
               </div>
               <div>
-                <p className="font-semibold text-slate-900">John Doe</p>
-                <p className="text-xs text-slate-500">Admin</p>
+                <p className="font-semibold text-slate-900">
+                  {userInfo.name}
+                </p>
+                <p className="text-xs text-slate-500 capitalize">
+                  {userInfo.role}
+                </p>
               </div>
             </div>
-            <p className="text-xs text-slate-500 mt-2">john.doe@college.edu</p>
+            <p className="text-xs text-slate-500 mt-2">
+              {userInfo.email}
+            </p>
           </div>
 
-          {/* MENU ITEMS */}
+          {/* MENU */}
           <div className="py-2">
             {profileItems.map((item, index) => {
               const Icon = item.icon;
@@ -122,7 +207,6 @@ export default function ProfileDropdown() {
               Logout
             </button>
           </div>
-
         </div>
       )}
     </div>

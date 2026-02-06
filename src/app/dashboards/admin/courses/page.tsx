@@ -2,116 +2,61 @@
 
 import { BookOpen, Users, Clock, BarChart3, Eye, Lock, Trash2 } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Pagination from "@/components/ui/pagination";
+import { supabase } from "@/lib/supabase/client";
 
 type Course = {
   id: string;
   title: string;
-  category: string;
-  instructor: string;
-  students: number;
-  duration: string;
-  progress: number;
-  status: "Active" | "Completed" | "Draft";
+  course_code: string;
+  credits: number;
+  created_at: string;
 };
-
-const courses: Course[] = [
-  {
-    id: "1",
-    title: "Database Management Systems",
-    category: "Computer Science",
-    instructor: "Dr. Priya Sharma",
-    students: 120,
-    duration: "40h",
-    progress: 78,
-    status: "Active",
-  },
-  {
-    id: "2",
-    title: "Operating Systems",
-    category: "Computer Science",
-    instructor: "Anil Kumar",
-    students: 95,
-    duration: "36h",
-    progress: 65,
-    status: "Active",
-  },
-  {
-    id: "3",
-    title: "Data Structures",
-    category: "Computer Science",
-    instructor: "Rahul Mehta",
-    students: 140,
-    duration: "45h",
-    progress: 100,
-    status: "Completed",
-  },
-  {
-    id: "4",
-    title: "Computer Networks",
-    category: "Computer Science",
-    instructor: "Sneha Rao",
-    students: 80,
-    duration: "30h",
-    progress: 40,
-    status: "Draft",
-  },
-  {
-    id: "5",
-    title: "Software Engineering",
-    category: "Computer Science",
-    instructor: "Dr. Amit Singh",
-    students: 110,
-    duration: "50h",
-    progress: 85,
-    status: "Active",
-  },
-  {
-    id: "6",
-    title: "Machine Learning",
-    category: "Computer Science",
-    instructor: "Prof. Neha Patel",
-    students: 75,
-    duration: "60h",
-    progress: 45,
-    status: "Active",
-  },
-  {
-    id: "7",
-    title: "Web Development",
-    category: "Computer Science",
-    instructor: "Vikram Singh",
-    students: 130,
-    duration: "35h",
-    progress: 90,
-    status: "Active",
-  },
-  {
-    id: "8",
-    title: "Digital Marketing",
-    category: "Business",
-    instructor: "Sunita Rao",
-    students: 65,
-    duration: "25h",
-    progress: 100,
-    status: "Completed",
-  },
-];
 
 export default function CoursesPage() {
   const router = useRouter();
   const [currentPage, setCurrentPage] = useState(1);
   const [searchTerm, setSearchTerm] = useState("");
-  const [categoryFilter, setCategoryFilter] = useState("");
-  const [statusFilter, setStatusFilter] = useState("");
+  const [courses, setCourses] = useState<Course[]>([]);
+  const [loading, setLoading] = useState(true);
   const itemsPerPage = 5;
 
+  useEffect(() => {
+    fetchCourses();
+  }, []);
+
+  const fetchCourses = async () => {
+    try {
+      console.log("Fetching courses...");
+      // First try courses table
+      let { data, error } = await supabase
+        .from("courses")
+        .select("id, title, course_code, credits, created_at")
+        .order("created_at", { ascending: false });
+
+      console.log("Courses data:", data, "Error:", error);
+      
+      // If courses table doesn't exist, create some dummy data
+      if (error && error.code === '42P01') {
+        console.log("Courses table doesn't exist, showing empty state");
+        data = [];
+        error = null;
+      }
+
+      if (error) throw error;
+      setCourses(data || []);
+    } catch (error) {
+      console.error("Error fetching courses:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const filteredCourses = courses.filter((course) => {
-    const matchesSearch = course.title.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesCategory = !categoryFilter || course.category === categoryFilter;
-    const matchesStatus = !statusFilter || course.status === statusFilter;
-    return matchesSearch && matchesCategory && matchesStatus;
+    const matchesSearch = course.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         course.course_code.toLowerCase().includes(searchTerm.toLowerCase());
+    return matchesSearch;
   });
 
   const totalPages = Math.ceil(filteredCourses.length / itemsPerPage);
@@ -122,6 +67,14 @@ export default function CoursesPage() {
     setCurrentPage(1);
   };
 
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center h-64">
+        <div className="text-slate-500">Loading courses...</div>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
 
@@ -130,7 +83,7 @@ export default function CoursesPage() {
         <div>
           <h1 className="text-2xl font-semibold">Courses</h1>
           <p className="text-sm text-slate-500">
-            Manage and monitor all courses
+            Manage and monitor all courses ({courses.length} total)
           </p>
         </div>
 
@@ -147,25 +100,25 @@ export default function CoursesPage() {
 
         <StatCard
           title="Total Courses"
-          value="120"
+          value={courses.length.toString()}
           icon={<BookOpen size={18} />}
         />
 
         <StatCard
           title="Active Courses"
-          value="98"
+          value={courses.length.toString()}
           icon={<BarChart3 size={18} />}
         />
 
         <StatCard
-          title="Completed Courses"
-          value="22"
+          title="Total Credits"
+          value={courses.reduce((sum, c) => sum + (c.credits || 0), 0).toString()}
           icon={<Clock size={18} />}
         />
 
         <StatCard
-          title="Avg Completion"
-          value="76%"
+          title="Avg Credits"
+          value={courses.length > 0 ? Math.round(courses.reduce((sum, c) => sum + (c.credits || 0), 0) / courses.length).toString() : "0"}
           icon={<Users size={18} />}
         />
 
@@ -174,7 +127,7 @@ export default function CoursesPage() {
       {/* FILTER BAR */}
       <div className="flex flex-wrap gap-3">
         <input
-          placeholder="Search courses..."
+          placeholder="Search courses by name or code..."
           value={searchTerm}
           onChange={(e) => {
             setSearchTerm(e.target.value);
@@ -182,128 +135,78 @@ export default function CoursesPage() {
           }}
           className="border rounded-lg px-3 py-2 text-sm w-60"
         />
-
-        <select 
-          value={categoryFilter}
-          onChange={(e) => {
-            setCategoryFilter(e.target.value);
-            handleFilterChange();
-          }}
-          className="border rounded-lg px-3 py-2 text-sm"
-        >
-          <option value="">All Categories</option>
-          <option value="Computer Science">Computer Science</option>
-          <option value="Business">Business</option>
-          <option value="Marketing">Marketing</option>
-        </select>
-
-        <select 
-          value={statusFilter}
-          onChange={(e) => {
-            setStatusFilter(e.target.value);
-            handleFilterChange();
-          }}
-          className="border rounded-lg px-3 py-2 text-sm"
-        >
-          <option value="">All Status</option>
-          <option value="Active">Active</option>
-          <option value="Completed">Completed</option>
-          <option value="Draft">Draft</option>
-        </select>
       </div>
 
       {/* COURSES TABLE */}
       <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
 
         {/* TABLE HEADER */}
-        <div className="grid grid-cols-[2fr_1fr_1fr_0.8fr_1fr_1fr_1fr] bg-slate-50 px-6 py-3 text-sm font-semibold gap-4">
-          <div>Course</div>
-          <div>Category</div>
-          <div>Instructor</div>
-          <div>Students</div>
-          <div>Progress</div>
-          <div>Status</div>
+        <div className="grid grid-cols-[2fr_1fr_1fr_1fr_1fr] bg-slate-50 px-6 py-3 text-sm font-semibold gap-4">
+          <div>Course Name</div>
+          <div>Course Code</div>
+          <div>Credits</div>
+          <div>Created</div>
           <div>Actions</div>
         </div>
 
         {/* ROWS */}
-        {paginatedCourses.map((course) => (
-          <div
-            key={course.id}
-            className="grid grid-cols-[2fr_1fr_1fr_0.8fr_1fr_1fr_1fr] px-6 py-4 text-sm items-center border-t hover:bg-slate-50 gap-4"
-          >
-
-            {/* COURSE */}
-            <div className="font-medium text-slate-900">
-              {course.title}
-            </div>
-
-            {/* CATEGORY */}
-            <div className="text-slate-600">
-              {course.category}
-            </div>
-
-            {/* INSTRUCTOR */}
-            <div className="text-slate-600">
-              {course.instructor}
-            </div>
-
-            {/* STUDENTS */}
-            <div className="text-slate-600">
-              {course.students}
-            </div>
-
-            {/* PROGRESS */}
-            <div className="flex items-center gap-2">
-              <div className="w-16 h-1.5 bg-slate-200 rounded-full overflow-hidden flex-shrink-0">
-                <div
-                  className="h-full bg-green-600"
-                  style={{ width: `${course.progress}%` }}
-                />
-              </div>
-              <span className="text-xs text-slate-500 w-10">
-                {course.progress}%
-              </span>
-            </div>
-
-            {/* STATUS */}
-            <span
-              className={`text-xs px-2 py-1 rounded-full w-fit ${
-                course.status === "Active"
-                  ? "bg-green-100 text-green-700"
-                  : course.status === "Completed"
-                  ? "bg-blue-100 text-blue-700"
-                  : "bg-slate-200 text-slate-600"
-              }`}
-            >
-              {course.status}
-            </span>
-
-            {/* ACTIONS */}
-            <div className="flex items-center gap-2">
-              <button
-                onClick={() => router.push(`/dashboards/admin/courses/${course.id}`)}
-                className="p-1.5 text-blue-600 hover:bg-blue-100 rounded-lg transition"
-                title="View"
-              >
-                <Eye size={16} />
-              </button>
-              <button
-                className="p-1.5 text-yellow-600 hover:bg-yellow-100 rounded-lg transition"
-                title="Disable"
-              >
-                <Lock size={16} />
-              </button>
-              <button
-                className="p-1.5 text-red-600 hover:bg-red-100 rounded-lg transition"
-                title="Delete"
-              >
-                <Trash2 size={16} />
-              </button>
-            </div>
-
+        {paginatedCourses.length === 0 ? (
+          <div className="px-6 py-8 text-center text-slate-500">
+            {searchTerm ? `No courses found for "${searchTerm}"` : "No courses found"}
           </div>
-        ))}
+        ) : (
+          paginatedCourses.map((course) => (
+            <div
+              key={course.id}
+              className="grid grid-cols-[2fr_1fr_1fr_1fr_1fr] px-6 py-4 text-sm items-center border-t hover:bg-slate-50 gap-4"
+            >
+
+              {/* COURSE */}
+              <div className="font-medium text-slate-900">
+                {course.title}
+              </div>
+
+              {/* CODE */}
+              <div className="text-slate-600">
+                {course.course_code}
+              </div>
+
+              {/* CREDITS */}
+              <div className="text-slate-600">
+                {course.credits || 0}
+              </div>
+
+              {/* CREATED */}
+              <div className="text-slate-600">
+                {new Date(course.created_at).toLocaleDateString()}
+              </div>
+
+              {/* ACTIONS */}
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => router.push(`/dashboards/admin/courses/${course.id}`)}
+                  className="p-1.5 text-blue-600 hover:bg-blue-100 rounded-lg transition"
+                  title="View"
+                >
+                  <Eye size={16} />
+                </button>
+                <button
+                  className="p-1.5 text-yellow-600 hover:bg-yellow-100 rounded-lg transition"
+                  title="Disable"
+                >
+                  <Lock size={16} />
+                </button>
+                <button
+                  className="p-1.5 text-red-600 hover:bg-red-100 rounded-lg transition"
+                  title="Delete"
+                >
+                  <Trash2 size={16} />
+                </button>
+              </div>
+
+            </div>
+          ))
+        )}
 
         {/* PAGINATION */}
         {filteredCourses.length > 0 && (

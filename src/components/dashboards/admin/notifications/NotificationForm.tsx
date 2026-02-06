@@ -1,259 +1,293 @@
 "use client";
 
 import { useState } from "react";
-import { Button } from "@/components/ui/button";
-import { Send, Clock } from "lucide-react";
-
-type RecipientType = "student" | "teacher" | "class" | "group" | "section" | "department" | "everyone";
-
-interface Recipient {
-  value: RecipientType;
-  label: string;
-}
+import { Send, Users, User, Building2, GraduationCap, Globe } from "lucide-react";
+import { sendNotification } from "../../../../app/dashboards/admin/actions/sendNotification";
 
 export default function NotificationForm() {
-  const [recipientType, setRecipientType] = useState<RecipientType>("student");
-  const [selectedRecipients, setSelectedRecipients] = useState<string[]>([]);
+  const [recipientType, setRecipientType] = useState<string>("everyone");
+  const [recipientId, setRecipientId] = useState("");
   const [title, setTitle] = useState("");
   const [message, setMessage] = useState("");
   const [scheduleType, setScheduleType] = useState<"now" | "later">("now");
   const [scheduledTime, setScheduledTime] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
 
-  const recipients: Recipient[] = [
-    { value: "student", label: "Specific Student" },
-    { value: "teacher", label: "Specific Teacher" },
-    { value: "class", label: "Specific Class" },
-    { value: "group", label: "Specific Group" },
-    { value: "section", label: "Specific Section" },
-    { value: "department", label: "Specific Department" },
-    { value: "everyone", label: "Everyone" },
+  const recipientTypes = [
+    {
+      id: "everyone",
+      label: "Everyone",
+      description: "Send to all users in the system",
+      icon: Globe,
+      color: "bg-slate-100 text-slate-700",
+      requiresId: false
+    },
+    {
+      id: "department",
+      label: "Department",
+      description: "Send to specific department",
+      icon: Building2,
+      color: "bg-slate-100 text-slate-700",
+      requiresId: true,
+      placeholder: "Enter department ID"
+    },
+    {
+      id: "batch",
+      label: "Batch",
+      description: "Send to specific batch/class",
+      icon: GraduationCap,
+      color: "bg-slate-100 text-slate-700",
+      requiresId: true,
+      placeholder: "Enter batch ID"
+    },
+    {
+      id: "group",
+      label: "Group",
+      description: "Send to specific group",
+      icon: Users,
+      color: "bg-slate-100 text-slate-700",
+      requiresId: true,
+      placeholder: "Enter group ID"
+    },
+    {
+      id: "individual",
+      label: "Individual",
+      description: "Send to specific person",
+      icon: User,
+      color: "bg-slate-100 text-slate-700",
+      requiresId: true,
+      placeholder: "Enter email or user ID"
+    }
   ];
 
-  const getOptions = () => {
-    const options: Record<RecipientType, string[]> = {
-      student: ["Arjun Singh", "Neha Gupta", "Vikram Patel", "Priya Desai", "Rohan Kumar"],
-      teacher: ["Dr. Priya Sharma", "Rajesh Kumar", "Sarah Johnson", "Amit Patel"],
-      class: ["CSE 1-A", "CSE 1-B", "CSE 2-A", "ECE 1-A", "MECH 1-A"],
-      group: ["Group A", "Group B", "Group C", "Group D"],
-      section: ["Section 1", "Section 2", "Section 3"],
-      department: ["Computer Science", "Electronics", "Mechanical", "Civil"],
-      everyone: [],
-    };
-    return options[recipientType] || [];
-  };
-
-  const toggleRecipient = (recipient: string) => {
-    setSelectedRecipients(
-      selectedRecipients.includes(recipient)
-        ? selectedRecipients.filter((r) => r !== recipient)
-        : [...selectedRecipients, recipient]
-    );
-  };
-
-  const handleSend = () => {
-    if (!title || !message) {
-      alert("Please fill in title and message");
-      return;
+  async function handleSubmit(formData: FormData) {
+    setIsLoading(true);
+    try {
+      await sendNotification(formData);
+      alert("Notification sent successfully!");
+      // Reset form
+      setTitle("");
+      setMessage("");
+      setRecipientId("");
+      setRecipientType("everyone");
+      setScheduleType("now");
+      setScheduledTime("");
+    } catch (error: any) {
+      alert("Error: " + error.message);
+    } finally {
+      setIsLoading(false);
     }
-    if (recipientType !== "everyone" && selectedRecipients.length === 0) {
-      alert("Please select at least one recipient");
-      return;
-    }
-    alert("Notification sent successfully!");
-    // Reset form
-    setTitle("");
-    setMessage("");
-    setSelectedRecipients([]);
-  };
+  }
 
-  const options = getOptions();
+  const selectedType = recipientTypes.find(t => t.id === recipientType);
 
   return (
-    <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-8">
+    <div className="max-w-4xl mx-auto space-y-8">
+      
+      {/* Header */}
+      <div className="text-center">
+        <h1 className="text-2xl font-bold text-slate-900 mb-2">Send Notification</h1>
+        <p className="text-slate-600">Compose and send notifications to users</p>
+      </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+      <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-8">
+        <form action={handleSubmit} className="space-y-8">
 
-        {/* LEFT - FORM */}
-        <div className="lg:col-span-2 space-y-6">
+          {/* Hidden inputs for form data */}
+          <input type="hidden" name="recipientType" value={recipientType} />
+          <input type="hidden" name="recipientId" value={recipientId} />
+          <input type="hidden" name="scheduleType" value={scheduleType} />
+          <input type="hidden" name="scheduledTime" value={scheduledTime} />
 
-          {/* RECIPIENT TYPE */}
+          {/* Recipient Type Selection */}
           <div>
-            <label className="block text-sm font-medium text-slate-900 mb-3">
-              Send To
-            </label>
-            <div className="grid grid-cols-2 gap-2">
-              {recipients.map((recipient) => (
-                <button
-                  key={recipient.value}
-                  onClick={() => {
-                    setRecipientType(recipient.value);
-                    setSelectedRecipients([]);
-                  }}
-                  className={`px-4 py-2 rounded-lg font-medium text-sm transition-all ${
-                    recipientType === recipient.value
-                      ? "bg-blue-600 text-white"
-                      : "bg-slate-100 text-slate-700 hover:bg-slate-200"
-                  }`}
-                >
-                  {recipient.label}
-                </button>
-              ))}
+            <h3 className="text-lg font-semibold text-slate-900 mb-4">Select Recipients</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {recipientTypes.map((type) => {
+                const IconComponent = type.icon;
+                return (
+                  <button
+                    key={type.id}
+                    type="button"
+                    onClick={() => {
+                      setRecipientType(type.id);
+                      setRecipientId("");
+                    }}
+                    className={`p-4 rounded-xl border-2 transition-all text-left ${
+                      recipientType === type.id
+                        ? "border-slate-400 bg-slate-50"
+                        : "border-slate-200 hover:border-slate-300 hover:bg-slate-50"
+                    }`}
+                  >
+                    <div className="flex items-start gap-3">
+                      <div className={`p-2 rounded-lg ${type.color}`}>
+                        <IconComponent className="w-5 h-5" />
+                      </div>
+                      <div className="flex-1">
+                        <h4 className="font-medium text-slate-900">{type.label}</h4>
+                        <p className="text-sm text-slate-500 mt-1">{type.description}</p>
+                      </div>
+                    </div>
+                  </button>
+                );
+              })}
             </div>
           </div>
 
-          {/* SPECIFIC RECIPIENTS SELECTION */}
-          {recipientType !== "everyone" && (
+          {/* Recipient ID Input */}
+          {selectedType?.requiresId && (
             <div>
-              <label className="block text-sm font-medium text-slate-900 mb-3">
-                Select {recipients.find((r) => r.value === recipientType)?.label.split(" ")[1]}s
+              <label className="block text-sm font-medium text-slate-900 mb-2">
+                {selectedType.label} Identifier
               </label>
-              <div className="grid grid-cols-2 gap-3 max-h-40 overflow-y-auto p-3 border border-slate-200 rounded-lg">
-                {options.map((option) => (
-                  <label key={option} className="flex items-center gap-2 cursor-pointer">
-                    <input
-                      type="checkbox"
-                      checked={selectedRecipients.includes(option)}
-                      onChange={() => toggleRecipient(option)}
-                      className="w-4 h-4 rounded border-slate-300 text-blue-600 focus:ring-blue-600"
-                    />
-                    <span className="text-sm text-slate-700">{option}</span>
-                  </label>
-                ))}
-              </div>
-              <p className="text-xs text-slate-500 mt-2">
-                Selected: {selectedRecipients.length}
-              </p>
+              <input
+                type="text"
+                value={recipientId}
+                onChange={(e) => setRecipientId(e.target.value)}
+                placeholder={selectedType.placeholder}
+                className="w-full px-4 py-3 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-slate-400 focus:border-transparent"
+                required
+              />
             </div>
           )}
 
-          {recipientType === "everyone" && (
-            <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
-              <p className="text-sm text-blue-900 font-medium">
-                ✓ This notification will be sent to all students, teachers, and admins
-              </p>
-            </div>
-          )}
-
-          {/* TITLE */}
+          {/* Title */}
           <div>
             <label className="block text-sm font-medium text-slate-900 mb-2">
-              Notification Title
+              Notification Title *
             </label>
             <input
               type="text"
-              placeholder="Enter notification title..."
+              name="title"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600"
+              placeholder="Enter a clear, descriptive title"
+              className="w-full px-4 py-3 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-slate-400 focus:border-transparent"
+              required
             />
           </div>
 
-          {/* MESSAGE */}
+          {/* Message */}
           <div>
             <label className="block text-sm font-medium text-slate-900 mb-2">
-              Message
+              Message *
             </label>
             <textarea
-              placeholder="Write your notification message..."
+              name="message"
               value={message}
               onChange={(e) => setMessage(e.target.value)}
+              placeholder="Write your notification message here..."
               rows={6}
-              className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600 resize-none"
+              className="w-full px-4 py-3 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-slate-400 focus:border-transparent resize-none"
+              required
             />
-            <p className="text-xs text-slate-500 mt-2">
-              {message.length} characters
-            </p>
-          </div>
-
-          {/* SCHEDULE */}
-          <div className="p-4 bg-slate-50 rounded-lg space-y-4">
-            <div className="flex gap-4">
-              <label className="flex items-center gap-2 cursor-pointer">
-                <input
-                  type="radio"
-                  checked={scheduleType === "now"}
-                  onChange={() => setScheduleType("now")}
-                  className="w-4 h-4"
-                />
-                <span className="text-sm text-slate-700">Send Now</span>
-              </label>
-              <label className="flex items-center gap-2 cursor-pointer">
-                <input
-                  type="radio"
-                  checked={scheduleType === "later"}
-                  onChange={() => setScheduleType("later")}
-                  className="w-4 h-4"
-                />
-                <span className="text-sm text-slate-700">Schedule Later</span>
-              </label>
-            </div>
-
-            {scheduleType === "later" && (
-              <input
-                type="datetime-local"
-                value={scheduledTime}
-                onChange={(e) => setScheduledTime(e.target.value)}
-                className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600"
-              />
-            )}
-          </div>
-
-          {/* SEND BUTTON */}
-          <Button
-            onClick={handleSend}
-            className="bg-blue-600 hover:bg-blue-700 w-full py-2 gap-2"
-          >
-            <Send className="w-4 h-4" />
-            Send Notification
-          </Button>
-
-        </div>
-
-        {/* RIGHT - PREVIEW */}
-        <div>
-          <div className="bg-slate-50 rounded-lg p-6 sticky top-24">
-            <h3 className="text-sm font-semibold text-slate-900 mb-4">Preview</h3>
-
-            <div className="bg-white border border-slate-200 rounded-lg p-4 space-y-3">
-              <div className="flex items-start gap-3">
-                <div className="w-8 h-8 rounded-full bg-blue-600 text-white flex items-center justify-center flex-shrink-0 text-xs font-bold">
-                  A
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="font-semibold text-slate-900 text-sm">
-                    {title || "Notification Title"}
-                  </p>
-                  <p className="text-xs text-slate-500 mt-1">
-                    {message || "Your notification message will appear here..."}
-                  </p>
-                  <div className="flex items-center gap-1 mt-2 text-xs text-slate-400">
-                    <Clock className="w-3 h-3" />
-                    Just now
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <div className="mt-4 p-3 bg-blue-50 rounded-lg text-xs text-blue-900 space-y-1">
-              <p>
-                <strong>Recipients:</strong>{" "}
-                {recipientType === "everyone"
-                  ? "All users"
-                  : selectedRecipients.length > 0
-                  ? `${selectedRecipients.length} selected`
-                  : "None selected"}
+            <div className="flex justify-between items-center mt-2">
+              <p className="text-xs text-slate-500">
+                {message.length} characters
               </p>
-              {scheduleType === "later" && scheduledTime && (
-                <p>
-                  <strong>Scheduled:</strong> {new Date(scheduledTime).toLocaleString()}
-                </p>
+              <p className="text-xs text-slate-500">
+                Keep it clear and concise
+              </p>
+            </div>
+          </div>
+
+          {/* Schedule Options */}
+          <div className="bg-slate-50 rounded-xl p-6">
+            <h4 className="font-medium text-slate-900 mb-4">Delivery Options</h4>
+            <div className="space-y-4">
+              <div className="flex gap-6">
+                <label className="flex items-center gap-3 cursor-pointer">
+                  <input
+                    type="radio"
+                    checked={scheduleType === "now"}
+                    onChange={() => setScheduleType("now")}
+                    className="w-4 h-4 text-slate-600 focus:ring-slate-400"
+                  />
+                  <div>
+                    <span className="font-medium text-slate-900">Send Now</span>
+                    <p className="text-sm text-slate-500">Deliver immediately</p>
+                  </div>
+                </label>
+                <label className="flex items-center gap-3 cursor-pointer">
+                  <input
+                    type="radio"
+                    checked={scheduleType === "later"}
+                    onChange={() => setScheduleType("later")}
+                    className="w-4 h-4 text-slate-600 focus:ring-slate-400"
+                  />
+                  <div>
+                    <span className="font-medium text-slate-900">Schedule Later</span>
+                    <p className="text-sm text-slate-500">Choose delivery time</p>
+                  </div>
+                </label>
+              </div>
+
+              {scheduleType === "later" && (
+                <div className="mt-4">
+                  <input
+                    type="datetime-local"
+                    value={scheduledTime}
+                    onChange={(e) => setScheduledTime(e.target.value)}
+                    className="px-4 py-3 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-slate-400 focus:border-transparent"
+                    required
+                  />
+                </div>
               )}
             </div>
           </div>
-        </div>
 
+          {/* Preview */}
+          <div className="bg-slate-50 rounded-xl p-6">
+            <h4 className="font-medium text-slate-900 mb-4">Preview</h4>
+            <div className="bg-white border border-slate-200 rounded-lg p-4">
+              <div className="flex items-start gap-3">
+                <div className="w-8 h-8 rounded-full bg-slate-600 text-white flex items-center justify-center text-xs font-bold">
+                  A
+                </div>
+                <div className="flex-1">
+                  <h5 className="font-medium text-slate-900">
+                    {title || "Your notification title will appear here"}
+                  </h5>
+                  <p className="text-sm text-slate-600 mt-1">
+                    {message || "Your message content will be displayed here..."}
+                  </p>
+                  <p className="text-xs text-slate-400 mt-2">Just now</p>
+                </div>
+              </div>
+            </div>
+            <div className="mt-3 text-sm text-slate-600">
+              <strong>Recipients:</strong> {selectedType?.label}
+              {selectedType?.requiresId && recipientId && ` (${recipientId})`}
+            </div>
+          </div>
+
+          {/* Send Button */}
+          <div className="flex gap-4 pt-4">
+            <button
+              type="button"
+              onClick={() => {
+                setTitle("");
+                setMessage("");
+                setRecipientId("");
+                setRecipientType("everyone");
+              }}
+              className="px-6 py-3 border border-slate-300 text-slate-700 rounded-xl font-medium hover:bg-slate-50 transition-colors"
+              disabled={isLoading}
+            >
+              Clear Form
+            </button>
+            <button
+              type="submit"
+              disabled={isLoading}
+              className="flex-1 flex items-center justify-center gap-2 px-6 py-3 bg-slate-800 text-white rounded-xl font-medium hover:bg-slate-900 transition-colors disabled:opacity-50"
+            >
+              <Send className="w-4 h-4" />
+              {isLoading ? "Sending..." : (scheduleType === "now" ? "Send Notification" : "Schedule Notification")}
+            </button>
+          </div>
+
+        </form>
       </div>
-
     </div>
   );
 }
